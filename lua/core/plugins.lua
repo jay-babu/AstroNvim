@@ -167,6 +167,12 @@ local astro_plugins = {
     config = function() require "configs.null-ls" end,
   },
 
+  -- Debugger
+  ["mfussenegger/nvim-dap"] = { opt = true, setup = function() table.insert(astronvim.file_plugins, "nvim-dap") end },
+
+  -- Debugger UI
+  ["rcarriga/nvim-dap-ui"] = { after = "nvim-dap", config = function() require "configs.dapui" end },
+
   -- Package Manager
   ["williamboman/mason.nvim"] = {
     module = "mason",
@@ -193,6 +199,9 @@ local astro_plugins = {
 
   -- null-ls manager
   ["jayp0521/mason-null-ls.nvim"] = { after = "null-ls.nvim", config = function() require "configs.mason-null-ls" end },
+
+  -- dap manager
+  ["jayp0521/mason-nvim-dap.nvim"] = { after = "nvim-dap", config = function() require "configs.mason-nvim-dap" end },
 
   -- LSP symbols
   ["stevearc/aerial.nvim"] = {
@@ -303,6 +312,7 @@ if status_ok then
           for mason_plugin, commands in pairs { -- lazy load mason plugin commands with Mason
             ["jayp0521/mason-null-ls.nvim"] = { "NullLsInstall", "NullLsUninstall" },
             ["williamboman/mason-lspconfig.nvim"] = { "LspInstall", "LspUninstall" },
+            ["jayp0521/mason-nvim-dap.nvim"] = { "DapInstall", "DapUninstall" },
           } do
             if plugins[mason_plugin] then vim.list_extend(plugin.cmd, commands) end
           end
