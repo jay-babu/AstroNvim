@@ -107,12 +107,12 @@ end
 -- @return The Heirline init function
 -- @usage local heirline_component = { init = astronvim.status.init.breadcrumbs { padding = { left = 1 } } }
 function astronvim.status.init.breadcrumbs(opts)
-  local aerial_avail, aerial = pcall(require, "aerial")
   opts = astronvim.default_tbl(
     opts,
     { separator = " > ", icon = { enabled = true, hl = false }, padding = { left = 0, right = 0 } }
   )
   return function(self)
+    local aerial_avail, aerial = pcall(require, "aerial")
     local data = aerial_avail and aerial.get_location(true) or {}
     local children = {}
     -- create a child for each level
@@ -538,8 +538,12 @@ end
 -- @see astronvim.status.utils.stylize
 function astronvim.status.provider.treesitter_status(opts)
   return function()
-    local ts_avail, ts = pcall(require, "nvim-treesitter.parsers")
-    return astronvim.status.utils.stylize((ts_avail and ts.has_parser()) and "TS" or "", opts)
+    local text = ""
+    if package.loaded["nvim-treesitter"] then
+      local ts_avail, ts = pcall(require, "nvim-treesitter.parsers")
+      if ts_avail and ts.has_parser() then text = "TS" end
+    end
+    return astronvim.status.utils.stylize(text, opts)
   end
 end
 
@@ -621,7 +625,8 @@ end
 --- A condition function if Aerial is available
 -- @return boolean of wether or not aerial plugin is installed
 -- @usage local heirline_component = { provider = "Example Provider", condition = astronvim.status.condition.aerial_available }
-function astronvim.status.condition.aerial_available() return astronvim.is_available "aerial.nvim" end
+-- function astronvim.status.condition.aerial_available() return astronvim.is_available "aerial.nvim" end
+function astronvim.status.condition.aerial_available() return package.loaded["aerial"] end
 
 --- A condition function if LSP is attached
 -- @return boolean of wether or not LSP is attached
@@ -632,6 +637,7 @@ function astronvim.status.condition.lsp_attached() return next(vim.lsp.buf_get_c
 -- @return boolean of wether or not treesitter is active
 -- @usage local heirline_component = { provider = "Example Provider", condition = astronvim.status.condition.treesitter_available }
 function astronvim.status.condition.treesitter_available()
+  if not package.loaded["nvim-treesitter"] then return false end
   local ts_avail, ts = pcall(require, "nvim-treesitter.parsers")
   return ts_avail and ts.has_parser()
 end
