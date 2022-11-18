@@ -31,10 +31,18 @@ local astro_plugins = {
   },
 
   -- Notification Enhancer
-  ["rcarriga/nvim-notify"] = { event = "UIEnter", config = function() require "configs.notify" end },
+  ["rcarriga/nvim-notify"] = {
+    module = "notify",
+    setup = function() astronvim.load_plugin_with_func("notify", vim, "notify") end,
+    config = function() require "configs.notify" end,
+  },
 
   -- Neovim UI Enhancer
-  ["stevearc/dressing.nvim"] = { event = "UIEnter", config = function() require "configs.dressing" end },
+  ["stevearc/dressing.nvim"] = {
+    module = "dressing",
+    setup = function() astronvim.load_plugin_with_func("dressing", vim.ui, { "input", "select" }) end,
+    config = function() require "configs.dressing" end,
+  },
 
   -- Smarter Splits
   ["mrjones2014/smart-splits.nvim"] = {
