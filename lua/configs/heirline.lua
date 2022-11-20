@@ -3,6 +3,9 @@ if not astronvim.status then return end
 local C = require "default_theme.colors"
 
 local function setup_colors()
+  local Normal = astronvim.get_hlgroup("Normal", { fg = C.fg, bg = C.bg })
+  local Comment = astronvim.get_hlgroup("Comment", { fg = C.grey_2, bg = C.bg })
+  local Error = astronvim.get_hlgroup("Error", { fg = C.red, bg = C.bg })
   local StatusLine = astronvim.get_hlgroup("StatusLine", { fg = C.fg, bg = C.grey_4 })
   local WinBar = astronvim.get_hlgroup("WinBar", { fg = C.grey_2, bg = C.bg })
   local WinBarNC = astronvim.get_hlgroup("WinBarNC", { fg = C.grey, bg = C.bg })
@@ -23,6 +26,11 @@ local function setup_colors()
   local DiagnosticInfo = astronvim.get_hlgroup("DiagnosticInfo", { fg = C.white_2, bg = C.grey_4 })
   local DiagnosticHint = astronvim.get_hlgroup("DiagnosticHint", { fg = C.yellow_1, bg = C.grey_4 })
   local colors = astronvim.user_plugin_opts("heirline.colors", {
+    tab_fg = Normal.fg,
+    tab_bg = Normal.bg,
+    tab_inactive_fg = Comment.fg,
+    tab_visible_bg = Normal.bg,
+    close_fg = Error.fg,
     fg = StatusLine.fg,
     bg = StatusLine.bg,
     section_fg = StatusLine.fg,
@@ -66,6 +74,8 @@ local function setup_colors()
   return colors
 end
 
+astronvim.status.utils.make_buflist = require("heirline.utils").make_buflist
+
 heirline.load_colors(setup_colors())
 local heirline_opts = astronvim.user_plugin_opts("plugins.heirline", {
   {
@@ -105,6 +115,51 @@ local heirline_opts = astronvim.user_plugin_opts("plugins.heirline", {
       file_icon = { hl = false },
       hl = { fg = "winbarnc_fg", bg = "winbarnc_bg" },
       surround = false,
+    },
+  },
+  {
+    {
+      condition = function(self)
+        local win = vim.api.nvim_tabpage_list_wins(0)[1]
+        self.winid = win
+        return vim.tbl_contains({ "neo-tree", "NvimTree" }, vim.bo[vim.api.nvim_win_get_buf(win)].filetype)
+      end,
+      provider = function(self) return string.rep(" ", vim.api.nvim_win_get_width(self.winid)) end,
+      hl = { bg = "bg" },
+    },
+    astronvim.status.utils.make_buflist {
+      astronvim.status.component.file_info {
+        file_icon = { padding = { left = 1 } },
+        unique_path = { hl = { fg = "winbarnc_fg" } },
+        close_button = {
+          hl = { fg = "close_fg" },
+          padding = { left = 1, right = 1 },
+          on_click = {
+            callback = function(_, minwid) vim.api.nvim_buf_delete(minwid, { force = false }) end,
+            minwid = function(self) return self.bufnr end,
+            name = "heirline_tabline_close_buffer_callback",
+          },
+        },
+        padding = { left = 1, right = 1 },
+        hl = function(self)
+          return {
+            fg = self.is_active and "tab_fg" or "tab_inactive_fg",
+            bold = self.is_active,
+            italic = self.is_active,
+          }
+        end,
+        on_click = {
+          callback = function(_, minwid) vim.api.nvim_win_set_buf(0, minwid) end,
+          minwid = function(self) return self.bufnr end,
+          name = "heirline_tabline_buffer_callback",
+        },
+        surround = {
+          separator = "tab",
+          color = function(self)
+            return { main = (self.is_active or self.is_visible) and "tab_bg" or "bg", left = "bg", right = "bg" }
+          end,
+        },
+      },
     },
   },
 })
